@@ -408,10 +408,14 @@ function DesignStudioPage() {
       toast.error("Sign in to save to your Garage");
       return;
     }
+    const title =
+      typeof window !== "undefined"
+        ? window.prompt("Name this design", `${PRODUCTS[product].label} build`)
+        : null;
     try {
-      // Best-effort save; table may not exist yet.
       const { error } = await supabase.from("saved_designs" as any).insert({
         user_id: data.user.id,
+        title: title || `${PRODUCTS[product].label} build`,
         product,
         design: state as any,
         price,
@@ -421,7 +425,7 @@ function DesignStudioPage() {
     } catch {
       const key = `liminal:garage:${data.user.id}`;
       const cur = JSON.parse(localStorage.getItem(key) || "[]");
-      cur.unshift({ id: cryptoId(), product, state, price, at: Date.now() });
+      cur.unshift({ id: cryptoId(), title, product, state, price, at: Date.now() });
       localStorage.setItem(key, JSON.stringify(cur.slice(0, 50)));
       toast.success("Saved locally to your Garage");
     }
