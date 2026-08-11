@@ -626,38 +626,98 @@ function DesignStudioPage() {
                     onChange={(e) => onDropFile(e.target.files)}
                   />
                 </label>
-                <div>
+                <div data-testid="sticker-book">
                   <div className="mb-2 flex items-center justify-between text-xs uppercase tracking-wider text-muted-foreground">
                     <span>Sticker Book</span>
                     <span className="font-mono normal-case text-[10px] text-muted-foreground/70">
                       {ALL_STICKERS.length} decals
                     </span>
                   </div>
-                  <Tabs defaultValue={STICKER_CATEGORIES[0].id}>
-                    <TabsList className="grid w-full grid-cols-4 h-auto">
-                      {STICKER_CATEGORIES.map((cat) => (
-                        <TabsTrigger key={cat.id} value={cat.id} className="text-[10px] px-1 py-1.5">
-                          {cat.label.split(" ")[0]}
-                        </TabsTrigger>
-                      ))}
-                    </TabsList>
-                    {STICKER_CATEGORIES.map((cat) => (
-                      <TabsContent key={cat.id} value={cat.id} className="mt-2">
-                        <div className="grid grid-cols-3 gap-2">
-                          {cat.stickers.map((s) => (
-                            <button
-                              key={s.id}
-                              title={s.label}
-                              onClick={() => addLayer(stickerLayer(s.id, activeFace, 50, 50, 1))}
-                              className="aspect-square rounded-md border border-border p-2 transition hover:border-foreground hover:bg-muted/50"
-                              style={{ color: state.ink }}
-                              dangerouslySetInnerHTML={{ __html: s.svg }}
-                            />
-                          ))}
-                        </div>
-                      </TabsContent>
+
+                  <Input
+                    value={stickerQuery}
+                    onChange={(e) => setStickerQuery(e.target.value)}
+                    placeholder="Search decals — try “something spacey”"
+                    aria-label="Search stickers"
+                    data-testid="sticker-search"
+                    className="mb-2 h-9 text-xs"
+                  />
+
+                  <div className="mb-2 flex flex-wrap gap-1">
+                    <button
+                      onClick={() => setStickerCollection(null)}
+                      className={`rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wider transition ${
+                        stickerCollection === null
+                          ? "border-foreground bg-foreground text-background"
+                          : "border-border text-muted-foreground hover:border-foreground"
+                      }`}
+                    >
+                      All
+                    </button>
+                    {STICKER_COLLECTIONS.map((c) => (
+                      <button
+                        key={c.id}
+                        title={c.description}
+                        onClick={() => setStickerCollection((cur) => (cur === c.id ? null : c.id))}
+                        className={`rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wider transition ${
+                          stickerCollection === c.id
+                            ? "border-foreground bg-foreground text-background"
+                            : "border-border text-muted-foreground hover:border-foreground"
+                        }`}
+                      >
+                        {c.label}
+                      </button>
                     ))}
-                  </Tabs>
+                  </div>
+
+                  {stickerQuery.trim() || stickerCollection ? (
+                    stickerResults.length ? (
+                      <div className="grid grid-cols-3 gap-2" data-testid="sticker-results">
+                        {stickerResults.map((s) => (
+                          <button
+                            key={s.id}
+                            title={s.label}
+                            data-testid={`sticker-${s.id}`}
+                            onClick={() => addLayer(stickerLayer(s.id, activeFace, 50, 50, 1))}
+                            className="aspect-square rounded-md border border-border p-2 transition hover:border-foreground hover:bg-muted/50"
+                            style={{ color: state.ink }}
+                            dangerouslySetInnerHTML={{ __html: s.svg }}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="py-4 text-center text-xs text-muted-foreground" data-testid="sticker-empty">
+                        No decals match “{stickerQuery}”. Try “wave”, “skull” or “y2k”.
+                      </p>
+                    )
+                  ) : (
+                    <Tabs defaultValue={STICKER_CATEGORIES[0].id}>
+                      <TabsList className="grid w-full grid-cols-4 h-auto">
+                        {STICKER_CATEGORIES.map((cat) => (
+                          <TabsTrigger key={cat.id} value={cat.id} className="text-[10px] px-1 py-1.5">
+                            {cat.label.split(" ")[0]}
+                          </TabsTrigger>
+                        ))}
+                      </TabsList>
+                      {STICKER_CATEGORIES.map((cat) => (
+                        <TabsContent key={cat.id} value={cat.id} className="mt-2">
+                          <div className="grid grid-cols-3 gap-2">
+                            {cat.stickers.map((s) => (
+                              <button
+                                key={s.id}
+                                title={s.label}
+                                data-testid={`sticker-${s.id}`}
+                                onClick={() => addLayer(stickerLayer(s.id, activeFace, 50, 50, 1))}
+                                className="aspect-square rounded-md border border-border p-2 transition hover:border-foreground hover:bg-muted/50"
+                                style={{ color: state.ink }}
+                                dangerouslySetInnerHTML={{ __html: s.svg }}
+                              />
+                            ))}
+                          </div>
+                        </TabsContent>
+                      ))}
+                    </Tabs>
+                  )}
                 </div>
                 {/* Metallic quick presets */}
                 <div>
