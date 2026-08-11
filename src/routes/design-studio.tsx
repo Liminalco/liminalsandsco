@@ -12,7 +12,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ErrorBoundary } from "@/components/site/ErrorBoundary";
-import { STICKER_CATEGORIES, METALLIC_PALETTES, findSticker, ALL_STICKERS } from "@/lib/sticker-library";
+import { STICKER_CATEGORIES, STICKER_COLLECTIONS, METALLIC_PALETTES, findSticker, ALL_STICKERS, searchStickers } from "@/lib/sticker-library";
 import {
   STUDIO_THEMES,
   type StudioTheme,
@@ -209,6 +209,12 @@ function DesignStudioPage() {
   const [future, setFuture] = useState<DesignState[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [snapLines, setSnapLines] = useState<{ x?: boolean; y?: boolean }>({});
+  const [stickerQuery, setStickerQuery] = useState("");
+  const [stickerCollection, setStickerCollection] = useState<string | null>(null);
+  const stickerResults = useMemo(
+    () => searchStickers(stickerQuery, { collectionId: stickerCollection }),
+    [stickerQuery, stickerCollection],
+  );
   const canvasRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ id: string; ox: number; oy: number } | null>(null);
 
