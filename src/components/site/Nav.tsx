@@ -197,6 +197,7 @@ export function Nav() {
               { to: "/community", label: "Community" },
               { to: "/blog", label: "Blog" },
               { to: "/support", label: "Support" },
+              { to: "/membership", label: "Join Us" },
             ].map((l) => (
               <Link
                 key={l.to}
