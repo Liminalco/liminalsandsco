@@ -214,6 +214,39 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_designs: {
+        Row: {
+          created_at: string
+          design: Json
+          id: string
+          price: number
+          product: string
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          design?: Json
+          id?: string
+          price?: number
+          product?: string
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          design?: Json
+          id?: string
+          price?: number
+          product?: string
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       site_settings: {
         Row: {
           key: string
