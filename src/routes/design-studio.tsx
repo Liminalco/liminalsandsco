@@ -862,6 +862,7 @@ function DesignStudioPage() {
             >
               <div
                 ref={canvasRef}
+                data-testid="studio-canvas"
                 className="relative overflow-hidden shadow-lg"
                 style={{
                   width: "min(560px, 100%)",
