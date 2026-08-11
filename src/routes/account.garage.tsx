@@ -25,6 +25,7 @@ type SavedDesign = {
   price: number;
   title?: string;
   at: number;
+  remote?: boolean;
 };
 
 function GaragePage() {
