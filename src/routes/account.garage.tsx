@@ -25,6 +25,7 @@ type SavedDesign = {
   price: number;
   title?: string;
   at: number;
+  remote?: boolean;
 };
 
 function GaragePage() {
@@ -41,6 +42,14 @@ function GaragePage() {
       setIsLoading(false);
       return;
     }
+    const key = `liminal:garage:${user.id}`;
+    const local: SavedDesign[] = (() => {
+      try {
+        return JSON.parse(localStorage.getItem(key) || "[]");
+      } catch {
+        return [];
+      }
+    })();
     try {
       const { data, error } = await supabase
         .from("saved_designs" as any)
@@ -48,18 +57,17 @@ function GaragePage() {
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      if (data && data.length > 0) {
-        setDesigns(data as unknown as SavedDesign[]);
-      } else {
-        // Fallback to localStorage
-        const key = `liminal:garage:${user.id}`;
-        const local = JSON.parse(localStorage.getItem(key) || "[]");
-        setDesigns(local);
-      }
+      const remote: SavedDesign[] = ((data ?? []) as any[]).map((row) => ({
+        id: row.id,
+        product: row.product,
+        state: (row.design ?? {}) as Record<string, unknown>,
+        price: Number(row.price ?? 0),
+        title: row.title ?? undefined,
+        at: new Date(row.created_at).getTime(),
+        remote: true,
+      }));
+      setDesigns([...remote, ...local.filter((l) => !remote.some((r) => r.id === l.id))]);
     } catch {
-      // Fallback to localStorage
-      const key = `liminal:garage:${user.id}`;
-      const local = JSON.parse(localStorage.getItem(key) || "[]");
       setDesigns(local);
     } finally {
       setIsLoading(false);
@@ -70,26 +78,32 @@ function GaragePage() {
     loadDesigns();
   }, [loadDesigns]);
 
-  const deleteDesign = (id: string) => {
+  const deleteDesign = async (id: string) => {
+    const target = designs.find((d) => d.id === id);
     setDesigns((prev) => {
       const next = prev.filter((d) => d.id !== id);
       if (user) {
         const key = `liminal:garage:${user.id}`;
-        localStorage.setItem(key, JSON.stringify(next));
+        localStorage.setItem(key, JSON.stringify(next.filter((d) => !d.remote)));
       }
       return next;
     });
+    if (target?.remote) {
+      await supabase.from("saved_designs" as any).delete().eq("id", id);
+    }
     toast.success("Design deleted");
   };
 
-  const renameDesign = (id: string, title: string) => {
-    setDesigns((prev) =>
-      prev.map((d) => (d.id === id ? { ...d, title } : d))
-    );
+  const renameDesign = async (id: string, title: string) => {
+    const target = designs.find((d) => d.id === id);
+    const updated = designs.map((d) => (d.id === id ? { ...d, title } : d));
+    setDesigns(updated);
     if (user) {
       const key = `liminal:garage:${user.id}`;
-      const updated = designs.map((d) => (d.id === id ? { ...d, title } : d));
-      localStorage.setItem(key, JSON.stringify(updated));
+      localStorage.setItem(key, JSON.stringify(updated.filter((d) => !d.remote)));
+    }
+    if (target?.remote) {
+      await supabase.from("saved_designs" as any).update({ title }).eq("id", id);
     }
     setEditingId(null);
     toast.success("Design renamed");

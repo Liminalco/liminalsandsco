@@ -227,3 +227,151 @@ export const METALLIC_PALETTES: MetallicPalette[] = [
     ink: "#0b0f14",
   },
 ];
+
+// ---------- Tags, collections & natural-language search ----------
+
+/** Keyword tags per sticker id — powers fuzzy/natural-language lookup. */
+export const STICKER_TAGS: Record<string, string[]> = {
+  "sparkle-4": ["sparkle", "shine", "glitter", "star", "twinkle", "magic", "y2k"],
+  "star-5": ["star", "classic", "night", "sky", "americana", "five point"],
+  starburst: ["burst", "retro", "explosion", "vintage", "sun", "pop", "60s"],
+  "glow-star": ["glow", "star", "halo", "soft", "dream", "night", "space"],
+  crescent: ["moon", "night", "luna", "crescent", "sky", "mystic", "space"],
+  planet: ["planet", "saturn", "space", "cosmic", "orbit", "galaxy", "sci fi"],
+  comet: ["comet", "meteor", "space", "speed", "shooting star", "fast"],
+  constellation: ["constellation", "stars", "map", "night sky", "astro", "space"],
+  wave: ["wave", "surf", "ocean", "sea", "water", "beach", "swell"],
+  chrome: ["chrome", "y2k", "metal", "shiny", "star", "2000s", "cyber"],
+  flame: ["flame", "fire", "hot", "burn", "hot rod", "speed", "moto"],
+  blob: ["blob", "y2k", "organic", "bubble", "abstract", "soft shape"],
+  "arrow-r": ["arrow", "direction", "right", "point", "bold", "graphic"],
+  lightning: ["lightning", "bolt", "electric", "power", "energy", "storm", "fast"],
+  skull: ["skull", "skate", "punk", "bones", "dark", "hardcore", "grunge"],
+  sun: ["sun", "summer", "beach", "retro", "70s", "warm", "surf"],
+  "frame-rect": ["frame", "border", "rectangle", "box", "layout", "outline"],
+  "badge-hex": ["badge", "hexagon", "emblem", "logo", "outline", "crest"],
+  "divider-wave": ["divider", "wavy", "line", "separator", "squiggle", "water"],
+  "dashed-ring": ["circle", "ring", "dashed", "outline", "round", "frame"],
+  banner: ["banner", "ribbon", "vintage", "label", "old school", "sign"],
+  "corner-brackets": ["brackets", "corners", "frame", "technical", "hud", "crop"],
+  amp: ["ampersand", "and", "type", "serif", "letter", "typography"],
+  hash: ["hash", "hashtag", "pound", "type", "social", "tag"],
+  asterisk: ["asterisk", "star", "footnote", "type", "symbol"],
+  "num-1": ["number", "one", "01", "numeral", "type", "racing"],
+  "arrow-txt": ["new", "arrow", "text", "label", "drop", "type"],
+  quote: ["quote", "quotation", "type", "serif", "editorial"],
+};
+
+/** Curated cross-category collections. */
+export type StickerCollection = { id: string; label: string; description: string; stickerIds: string[] };
+
+export const STICKER_COLLECTIONS: StickerCollection[] = [
+  {
+    id: "surf-summer",
+    label: "Surf & Summer",
+    description: "Waves, suns and easy heat",
+    stickerIds: ["wave", "sun", "divider-wave", "blob", "banner"],
+  },
+  {
+    id: "skate-punk",
+    label: "Skate Punk",
+    description: "Hard edges and grip-tape energy",
+    stickerIds: ["skull", "lightning", "flame", "arrow-r", "hash", "asterisk"],
+  },
+  {
+    id: "cosmic",
+    label: "Cosmic",
+    description: "Deep space and night skies",
+    stickerIds: ["planet", "comet", "constellation", "crescent", "glow-star", "star-5"],
+  },
+  {
+    id: "y2k-chrome",
+    label: "Y2K Chrome",
+    description: "2000s shine and liquid metal",
+    stickerIds: ["chrome", "blob", "sparkle-4", "starburst", "num-1"],
+  },
+  {
+    id: "editorial",
+    label: "Editorial",
+    description: "Frames, rules and type marks",
+    stickerIds: ["frame-rect", "badge-hex", "corner-brackets", "dashed-ring", "quote", "amp", "arrow-txt"],
+  },
+];
+
+const STOP_WORDS = new Set([
+  "a","an","the","some","any","me","my","i","find","show","give","want","need","looking","for",
+  "with","and","or","of","to","that","this","please","sticker","stickers","decal","decals","graphic",
+  "graphics","something","kind","like","style","vibe","vibes","thing","things",
+]);
+
+const SYNONYMS: Record<string, string[]> = {
+  ocean: ["wave", "surf", "water"],
+  sea: ["wave", "surf", "water"],
+  beach: ["sun", "wave", "summer"],
+  night: ["moon", "star", "space"],
+  space: ["planet", "comet", "constellation", "star"],
+  galaxy: ["planet", "space", "constellation"],
+  spooky: ["skull", "dark"],
+  scary: ["skull", "dark"],
+  fast: ["lightning", "comet", "speed", "arrow"],
+  edgy: ["skull", "flame", "punk"],
+  shiny: ["chrome", "metal", "glitter", "sparkle"],
+  retro: ["starburst", "sun", "vintage", "banner"],
+  cute: ["sparkle", "blob", "glow"],
+  border: ["frame", "outline"],
+  letter: ["type", "typography"],
+  text: ["type", "typography"],
+};
+
+function tokenize(query: string): string[] {
+  const raw = query
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, " ")
+    .split(/\s+/)
+    .filter((t) => t.length > 1 && !STOP_WORDS.has(t));
+  const expanded = new Set<string>(raw);
+  for (const t of raw) for (const s of SYNONYMS[t] ?? []) expanded.add(s);
+  return [...expanded];
+}
+
+function haystack(sticker: Sticker): string {
+  const cat = STICKER_CATEGORIES.find((c) => c.stickers.some((s) => s.id === sticker.id));
+  const collections = STICKER_COLLECTIONS.filter((c) => c.stickerIds.includes(sticker.id)).map((c) => c.label);
+  return [
+    sticker.label,
+    sticker.id.replace(/-/g, " "),
+    cat?.label ?? "",
+    ...collections,
+    ...(STICKER_TAGS[sticker.id] ?? []),
+  ]
+    .join(" ")
+    .toLowerCase();
+}
+
+/**
+ * Natural-language sticker search. Tokenizes the query, drops filler words,
+ * expands synonyms and ranks by how many tokens hit label/tags/category/collection.
+ */
+export function searchStickers(query: string, opts?: { collectionId?: string | null }): Sticker[] {
+  let pool = ALL_STICKERS;
+  if (opts?.collectionId) {
+    const col = STICKER_COLLECTIONS.find((c) => c.id === opts.collectionId);
+    pool = col ? (col.stickerIds.map(findSticker).filter(Boolean) as Sticker[]) : [];
+  }
+  const tokens = tokenize(query);
+  if (!tokens.length) return pool;
+  return pool
+    .map((sticker) => {
+      const hay = haystack(sticker);
+      let score = 0;
+      for (const t of tokens) {
+        if (hay.includes(t)) score += 2;
+        else if (t.length > 3 && hay.includes(t.slice(0, -1))) score += 1;
+      }
+      if (sticker.label.toLowerCase().includes(tokens[0])) score += 3;
+      return { sticker, score };
+    })
+    .filter((r) => r.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .map((r) => r.sticker);
+}
