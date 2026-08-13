@@ -18,5 +18,27 @@ jobs:
         run: bunx tsgo --noEmit || bunx tsc --noEmit
       - name: Lint
         run: bun run lint
+      - name: Clean stale build output
+        run: bun run clean
       - name: Build
-        run: bun run build
+        run: bun run build 2>&1 | tee build.log
+      - name: Print output directory structure
+        run: |
+          echo "::group::dist tree"
+          find dist -maxdepth 3 -printf '%y %p\n' | sort || echo "dist/ missing"
+          echo "::endgroup::"
+          echo "::group::stray .output tree"
+          find .output -maxdepth 2 -printf '%y %p\n' | sort || echo ".output/ absent (expected)"
+          echo "::endgroup::"
+      - name: dist-check
+        run: bun run dist-check 2>&1 | tee dist-check.log
+      - name: Upload build logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: |
+            build.log
+            dist-check.log
+          if-no-files-found: warn
+          retention-days: 7

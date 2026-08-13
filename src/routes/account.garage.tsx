@@ -7,6 +7,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useCart } from "@/hooks/use-cart";
 import { toast } from "sonner";
+import {
+  formatVersionDate,
+  getVersions,
+  restoreVersion,
+  stripVersions,
+  type DesignVersion,
+  type VersionedDesign,
+} from "@/lib/design-versions";
+
 
 export const Route = createFileRoute("/account/garage")({
   head: () => ({
@@ -26,7 +35,9 @@ type SavedDesign = {
   title?: string;
   at: number;
   remote?: boolean;
+  versions?: DesignVersion[];
 };
+
 
 function GaragePage() {
   const { user, loading } = useAuth();

@@ -12,7 +12,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ErrorBoundary } from "@/components/site/ErrorBoundary";
-import { STICKER_CATEGORIES, STICKER_COLLECTIONS, METALLIC_PALETTES, findSticker, ALL_STICKERS, searchStickers } from "@/lib/sticker-library";
+import { STICKER_CATEGORIES, STICKER_COLLECTIONS, METALLIC_PALETTES, findSticker, ALL_STICKERS, searchStickers, suggestStickerTerms } from "@/lib/sticker-library";
+import { pushVersion, stripVersions } from "@/lib/design-versions";
 import {
   STUDIO_THEMES,
   type StudioTheme,
@@ -211,10 +212,53 @@ function DesignStudioPage() {
   const [snapLines, setSnapLines] = useState<{ x?: boolean; y?: boolean }>({});
   const [stickerQuery, setStickerQuery] = useState("");
   const [stickerCollection, setStickerCollection] = useState<string | null>(null);
+  const [suggestOpen, setSuggestOpen] = useState(false);
+  const [suggestIndex, setSuggestIndex] = useState(-1);
+  const [garageDesignId, setGarageDesignId] = useState<string | null>(null);
   const stickerResults = useMemo(
     () => searchStickers(stickerQuery, { collectionId: stickerCollection }),
     [stickerQuery, stickerCollection],
   );
+  const suggestions = useMemo(() => suggestStickerTerms(stickerQuery), [stickerQuery]);
+
+  const applySuggestion = useCallback((s: ReturnType<typeof suggestStickerTerms>[number]) => {
+    if (s.kind === "collection" && s.collectionId) {
+      setStickerCollection(s.collectionId);
+      setStickerQuery("");
+    } else {
+      setStickerQuery(s.value);
+    }
+    setSuggestOpen(false);
+    setSuggestIndex(-1);
+  }, []);
+
+  const onSuggestKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Escape") {
+        setSuggestOpen(false);
+        setSuggestIndex(-1);
+        return;
+      }
+      if (!suggestOpen || suggestions.length === 0) {
+        if (e.key === "ArrowDown") setSuggestOpen(true);
+        return;
+      }
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setSuggestIndex((i) => (i + 1) % suggestions.length);
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setSuggestIndex((i) => (i <= 0 ? suggestions.length - 1 : i - 1));
+      } else if (e.key === "Enter" && suggestIndex >= 0) {
+        e.preventDefault();
+        applySuggestion(suggestions[suggestIndex]);
+      } else if (e.key === "Tab" && suggestIndex >= 0) {
+        applySuggestion(suggestions[suggestIndex]);
+      }
+    },
+    [applySuggestion, suggestIndex, suggestOpen, suggestions],
+  );
+
   const canvasRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ id: string; ox: number; oy: number } | null>(null);
 
@@ -408,6 +452,33 @@ function DesignStudioPage() {
       toast.error("Sign in to save to your Garage");
       return;
     }
+
+    // Updating a design opened from the Garage keeps a revision history.
+    if (garageDesignId) {
+      try {
+        const { data: existing, error: readErr } = await supabase
+          .from("saved_designs" as any)
+          .select("design, price, title")
+          .eq("id", garageDesignId)
+          .maybeSingle();
+        if (readErr) throw readErr;
+        const nextDesign = pushVersion(
+          { ...((existing as any)?.design ?? {}), price: Number((existing as any)?.price ?? 0) },
+          stripVersions(state as any),
+          { price },
+        );
+        const { error } = await supabase
+          .from("saved_designs" as any)
+          .update({ design: nextDesign as any, price })
+          .eq("id", garageDesignId);
+        if (error) throw error;
+        toast.success("New revision saved to your Garage");
+        return;
+      } catch {
+        toast.error("Couldn't save the revision — saving as a new design instead");
+      }
+    }
+
     const title =
       typeof window !== "undefined"
         ? window.prompt("Name this design", `${PRODUCTS[product].label} build`)
@@ -417,7 +488,7 @@ function DesignStudioPage() {
         user_id: data.user.id,
         title: title || `${PRODUCTS[product].label} build`,
         product,
-        design: state as any,
+        design: stripVersions(state as any) as any,
         price,
       });
       if (error) throw error;
@@ -430,6 +501,7 @@ function DesignStudioPage() {
       toast.success("Saved locally to your Garage");
     }
   };
+
   const exportPNG = async () => {
     const node = canvasRef.current;
     if (!node) return;
@@ -482,11 +554,13 @@ function DesignStudioPage() {
     }
   };
 
-  // Load from ?d= on mount
+  // Load from ?d= (shared/garage payload) and ?g= (garage design id) on mount
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    setGarageDesignId(params.get("g"));
     const d = params.get("d");
     if (!d) return;
+
     try {
       const parsed = JSON.parse(decodeURIComponent(escape(atob(d))));
       if (parsed?.product && parsed?.state) {
@@ -644,14 +718,62 @@ function DesignStudioPage() {
                     </span>
                   </div>
 
-                  <Input
-                    value={stickerQuery}
-                    onChange={(e) => setStickerQuery(e.target.value)}
-                    placeholder="Search decals — try “something spacey”"
-                    aria-label="Search stickers"
-                    data-testid="sticker-search"
-                    className="mb-2 h-9 text-xs"
-                  />
+                  <div className="relative mb-2">
+                    <Input
+                      value={stickerQuery}
+                      onChange={(e) => {
+                        setStickerQuery(e.target.value);
+                        setSuggestOpen(true);
+                        setSuggestIndex(-1);
+                      }}
+                      onFocus={() => setSuggestOpen(true)}
+                      onBlur={() => window.setTimeout(() => setSuggestOpen(false), 120)}
+                      onKeyDown={onSuggestKeyDown}
+                      placeholder="Search decals — try “something spacey”"
+                      aria-label="Search stickers"
+                      aria-autocomplete="list"
+                      aria-expanded={suggestOpen && suggestions.length > 0}
+                      aria-controls="sticker-suggestions"
+                      aria-activedescendant={
+                        suggestIndex >= 0 ? `sticker-suggestion-${suggestIndex}` : undefined
+                      }
+                      role="combobox"
+                      data-testid="sticker-search"
+                      className="h-9 text-xs"
+                    />
+                    {suggestOpen && suggestions.length > 0 && (
+                      <ul
+                        id="sticker-suggestions"
+                        role="listbox"
+                        data-testid="sticker-suggestions"
+                        className="absolute z-30 mt-1 w-full overflow-hidden rounded-md border border-border bg-popover shadow-lg"
+                      >
+                        {suggestions.map((s, i) => (
+                          <li key={`${s.kind}-${s.value}`}>
+                            <button
+                              type="button"
+                              id={`sticker-suggestion-${i}`}
+                              role="option"
+                              aria-selected={i === suggestIndex}
+                              data-testid={`sticker-suggestion-${i}`}
+                              onMouseEnter={() => setSuggestIndex(i)}
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={() => applySuggestion(s)}
+                              className={`flex w-full items-center justify-between gap-2 px-2.5 py-1.5 text-left text-xs transition ${
+                                i === suggestIndex ? "bg-muted text-foreground" : "text-muted-foreground"
+                              }`}
+                            >
+                              <span className="truncate">{s.label}</span>
+                              <span className="shrink-0 font-mono text-[10px] uppercase tracking-wider text-muted-foreground/70">
+                                {s.kind} · {s.count}
+                              </span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+
 
                   <div className="mb-2 flex flex-wrap gap-1">
                     <button

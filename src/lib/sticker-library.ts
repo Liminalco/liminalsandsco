@@ -375,3 +375,96 @@ export function searchStickers(query: string, opts?: { collectionId?: string | n
     .sort((a, b) => b.score - a.score)
     .map((r) => r.sticker);
 }
+
+export type StickerSuggestion = {
+  value: string;
+  label: string;
+  kind: "tag" | "collection" | "category" | "decal";
+  collectionId?: string;
+  count: number;
+};
+
+const ALL_TAGS: { tag: string; count: number }[] = (() => {
+  const counts = new Map<string, number>();
+  for (const list of Object.values(STICKER_TAGS)) {
+    for (const tag of list) counts.set(tag, (counts.get(tag) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .map(([tag, count]) => ({ tag, count }))
+    .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag));
+})();
+
+/**
+ * Autocomplete source for the sticker search field. Suggests matching tags,
+ * curated collections, categories and individual decals as the user types.
+ */
+export function suggestStickerTerms(query: string, limit = 8): StickerSuggestion[] {
+  const q = query.trim().toLowerCase();
+  const out: StickerSuggestion[] = [];
+
+  if (!q) {
+    for (const c of STICKER_COLLECTIONS) {
+      out.push({
+        value: c.label,
+        label: c.label,
+        kind: "collection",
+        collectionId: c.id,
+        count: c.stickerIds.length,
+      });
+    }
+    for (const { tag, count } of ALL_TAGS.slice(0, limit)) {
+      out.push({ value: tag, label: tag, kind: "tag", count });
+    }
+    return out.slice(0, limit);
+  }
+
+  const rank = (text: string) =>
+    text.startsWith(q) ? 0 : text.includes(q) ? 1 : -1;
+
+  const scored: { s: StickerSuggestion; r: number }[] = [];
+
+  for (const c of STICKER_COLLECTIONS) {
+    const r = Math.max(rank(c.label.toLowerCase()), rank(c.description.toLowerCase()) === 0 ? 1 : rank(c.description.toLowerCase()));
+    if (r >= 0)
+      scored.push({
+        s: {
+          value: c.label,
+          label: c.label,
+          kind: "collection",
+          collectionId: c.id,
+          count: c.stickerIds.length,
+        },
+        r,
+      });
+  }
+
+  for (const cat of STICKER_CATEGORIES) {
+    const r = rank(cat.label.toLowerCase());
+    if (r >= 0)
+      scored.push({
+        s: { value: cat.label, label: cat.label, kind: "category", count: cat.stickers.length },
+        r: r + 0.1,
+      });
+  }
+
+  for (const { tag, count } of ALL_TAGS) {
+    const r = rank(tag);
+    if (r >= 0) scored.push({ s: { value: tag, label: tag, kind: "tag", count }, r: r + 0.2 });
+  }
+
+  for (const s of ALL_STICKERS) {
+    const r = rank(s.label.toLowerCase());
+    if (r >= 0)
+      scored.push({ s: { value: s.label, label: s.label, kind: "decal", count: 1 }, r: r + 0.4 });
+  }
+
+  const seen = new Set<string>();
+  for (const { s } of scored.sort((a, b) => a.r - b.r || b.s.count - a.s.count)) {
+    const key = `${s.kind}:${s.value.toLowerCase()}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(s);
+    if (out.length >= limit) break;
+  }
+  return out;
+}
