@@ -644,14 +644,62 @@ function DesignStudioPage() {
                     </span>
                   </div>
 
-                  <Input
-                    value={stickerQuery}
-                    onChange={(e) => setStickerQuery(e.target.value)}
-                    placeholder="Search decals — try “something spacey”"
-                    aria-label="Search stickers"
-                    data-testid="sticker-search"
-                    className="mb-2 h-9 text-xs"
-                  />
+                  <div className="relative mb-2">
+                    <Input
+                      value={stickerQuery}
+                      onChange={(e) => {
+                        setStickerQuery(e.target.value);
+                        setSuggestOpen(true);
+                        setSuggestIndex(-1);
+                      }}
+                      onFocus={() => setSuggestOpen(true)}
+                      onBlur={() => window.setTimeout(() => setSuggestOpen(false), 120)}
+                      onKeyDown={onSuggestKeyDown}
+                      placeholder="Search decals — try “something spacey”"
+                      aria-label="Search stickers"
+                      aria-autocomplete="list"
+                      aria-expanded={suggestOpen && suggestions.length > 0}
+                      aria-controls="sticker-suggestions"
+                      aria-activedescendant={
+                        suggestIndex >= 0 ? `sticker-suggestion-${suggestIndex}` : undefined
+                      }
+                      role="combobox"
+                      data-testid="sticker-search"
+                      className="h-9 text-xs"
+                    />
+                    {suggestOpen && suggestions.length > 0 && (
+                      <ul
+                        id="sticker-suggestions"
+                        role="listbox"
+                        data-testid="sticker-suggestions"
+                        className="absolute z-30 mt-1 w-full overflow-hidden rounded-md border border-border bg-popover shadow-lg"
+                      >
+                        {suggestions.map((s, i) => (
+                          <li key={`${s.kind}-${s.value}`}>
+                            <button
+                              type="button"
+                              id={`sticker-suggestion-${i}`}
+                              role="option"
+                              aria-selected={i === suggestIndex}
+                              data-testid={`sticker-suggestion-${i}`}
+                              onMouseEnter={() => setSuggestIndex(i)}
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={() => applySuggestion(s)}
+                              className={`flex w-full items-center justify-between gap-2 px-2.5 py-1.5 text-left text-xs transition ${
+                                i === suggestIndex ? "bg-muted text-foreground" : "text-muted-foreground"
+                              }`}
+                            >
+                              <span className="truncate">{s.label}</span>
+                              <span className="shrink-0 font-mono text-[10px] uppercase tracking-wider text-muted-foreground/70">
+                                {s.kind} · {s.count}
+                              </span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+
 
                   <div className="mb-2 flex flex-wrap gap-1">
                     <button
