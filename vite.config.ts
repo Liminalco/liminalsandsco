@@ -1,18 +1,9 @@
-import { defineConfig } from "vite";
-import { tanstackStart } from "@tanstack/react-start/plugin/vite";
-import { nitro } from "nitro/vite";
-import tailwindcss from "@tailwindcss/vite";
-import tsConfigPaths from "vite-tsconfig-paths";
-import react from "@vitejs/plugin-react";
+import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
-  plugins: [
-    tanstackStart(),
-    react(),
-    nitro(),
-    tailwindcss(),
-    tsConfigPaths()
-  ],
+  tanstackStart: {
+    server: { entry: "server" },
+  },
   ssr: {
     noExternal: ["react-leaflet", "leaflet"],
   },
