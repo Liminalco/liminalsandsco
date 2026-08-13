@@ -4,10 +4,12 @@ export default defineConfig({
   tanstackStart: {
     server: { entry: "server" },
   },
-  ssr: {
-    noExternal: ["react-leaflet", "leaflet"],
-  },
-  optimizeDeps: {
-    include: ["react-leaflet", "leaflet"],
+  vite: {
+    ssr: {
+      noExternal: ["react-leaflet", "leaflet"],
+    },
+    optimizeDeps: {
+      include: ["react-leaflet", "leaflet"],
+    },
   },
 });
