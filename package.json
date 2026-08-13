@@ -11,7 +11,10 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "clean": "rm -rf dist .output .wrangler/deploy",
+    "prebuild": "rm -rf dist .output .wrangler/deploy",
+    "dist-check": "node scripts/dist-check.mjs"
   },
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.42.4",
