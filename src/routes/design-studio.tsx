@@ -452,6 +452,33 @@ function DesignStudioPage() {
       toast.error("Sign in to save to your Garage");
       return;
     }
+
+    // Updating a design opened from the Garage keeps a revision history.
+    if (garageDesignId) {
+      try {
+        const { data: existing, error: readErr } = await supabase
+          .from("saved_designs" as any)
+          .select("design, price, title")
+          .eq("id", garageDesignId)
+          .maybeSingle();
+        if (readErr) throw readErr;
+        const nextDesign = pushVersion(
+          { ...((existing as any)?.design ?? {}), price: Number((existing as any)?.price ?? 0) },
+          stripVersions(state as any),
+          { price },
+        );
+        const { error } = await supabase
+          .from("saved_designs" as any)
+          .update({ design: nextDesign as any, price })
+          .eq("id", garageDesignId);
+        if (error) throw error;
+        toast.success("New revision saved to your Garage");
+        return;
+      } catch {
+        toast.error("Couldn't save the revision — saving as a new design instead");
+      }
+    }
+
     const title =
       typeof window !== "undefined"
         ? window.prompt("Name this design", `${PRODUCTS[product].label} build`)
@@ -461,7 +488,7 @@ function DesignStudioPage() {
         user_id: data.user.id,
         title: title || `${PRODUCTS[product].label} build`,
         product,
-        design: state as any,
+        design: stripVersions(state as any) as any,
         price,
       });
       if (error) throw error;
@@ -474,6 +501,7 @@ function DesignStudioPage() {
       toast.success("Saved locally to your Garage");
     }
   };
+
   const exportPNG = async () => {
     const node = canvasRef.current;
     if (!node) return;
