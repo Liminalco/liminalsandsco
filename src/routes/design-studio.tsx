@@ -554,11 +554,13 @@ function DesignStudioPage() {
     }
   };
 
-  // Load from ?d= on mount
+  // Load from ?d= (shared/garage payload) and ?g= (garage design id) on mount
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    setGarageDesignId(params.get("g"));
     const d = params.get("d");
     if (!d) return;
+
     try {
       const parsed = JSON.parse(decodeURIComponent(escape(atob(d))));
       if (parsed?.product && parsed?.state) {
