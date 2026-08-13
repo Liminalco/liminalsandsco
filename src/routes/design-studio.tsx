@@ -12,7 +12,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ErrorBoundary } from "@/components/site/ErrorBoundary";
-import { STICKER_CATEGORIES, STICKER_COLLECTIONS, METALLIC_PALETTES, findSticker, ALL_STICKERS, searchStickers } from "@/lib/sticker-library";
+import { STICKER_CATEGORIES, STICKER_COLLECTIONS, METALLIC_PALETTES, findSticker, ALL_STICKERS, searchStickers, suggestStickerTerms } from "@/lib/sticker-library";
+import { pushVersion, stripVersions } from "@/lib/design-versions";
 import {
   STUDIO_THEMES,
   type StudioTheme,
