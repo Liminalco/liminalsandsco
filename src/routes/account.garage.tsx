@@ -26,7 +26,9 @@ type SavedDesign = {
   title?: string;
   at: number;
   remote?: boolean;
+  versions?: DesignVersion[];
 };
+
 
 function GaragePage() {
   const { user, loading } = useAuth();
