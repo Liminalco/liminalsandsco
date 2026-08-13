@@ -211,10 +211,53 @@ function DesignStudioPage() {
   const [snapLines, setSnapLines] = useState<{ x?: boolean; y?: boolean }>({});
   const [stickerQuery, setStickerQuery] = useState("");
   const [stickerCollection, setStickerCollection] = useState<string | null>(null);
+  const [suggestOpen, setSuggestOpen] = useState(false);
+  const [suggestIndex, setSuggestIndex] = useState(-1);
+  const [garageDesignId, setGarageDesignId] = useState<string | null>(null);
   const stickerResults = useMemo(
     () => searchStickers(stickerQuery, { collectionId: stickerCollection }),
     [stickerQuery, stickerCollection],
   );
+  const suggestions = useMemo(() => suggestStickerTerms(stickerQuery), [stickerQuery]);
+
+  const applySuggestion = useCallback((s: ReturnType<typeof suggestStickerTerms>[number]) => {
+    if (s.kind === "collection" && s.collectionId) {
+      setStickerCollection(s.collectionId);
+      setStickerQuery("");
+    } else {
+      setStickerQuery(s.value);
+    }
+    setSuggestOpen(false);
+    setSuggestIndex(-1);
+  }, []);
+
+  const onSuggestKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Escape") {
+        setSuggestOpen(false);
+        setSuggestIndex(-1);
+        return;
+      }
+      if (!suggestOpen || suggestions.length === 0) {
+        if (e.key === "ArrowDown") setSuggestOpen(true);
+        return;
+      }
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setSuggestIndex((i) => (i + 1) % suggestions.length);
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setSuggestIndex((i) => (i <= 0 ? suggestions.length - 1 : i - 1));
+      } else if (e.key === "Enter" && suggestIndex >= 0) {
+        e.preventDefault();
+        applySuggestion(suggestions[suggestIndex]);
+      } else if (e.key === "Tab" && suggestIndex >= 0) {
+        applySuggestion(suggestions[suggestIndex]);
+      }
+    },
+    [applySuggestion, suggestIndex, suggestOpen, suggestions],
+  );
+
   const canvasRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ id: string; ox: number; oy: number } | null>(null);
 
