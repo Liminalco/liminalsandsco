@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect, useCallback } from "react";
-import { Trash2, Pencil, ShoppingCart, ExternalLink, Plus, Loader as Loader2 } from "lucide-react";
+import { Trash2, Pencil, ShoppingCart, ExternalLink, Plus, Loader as Loader2, History as HistoryIcon, RotateCcw } from "lucide-react";
 import { Nav } from "@/components/site/Nav";
 import { Footer } from "@/components/site/Footer";
 import { supabase } from "@/integrations/supabase/client";
@@ -379,7 +379,7 @@ function DesignCard({
             aria-expanded={historyOpen}
             className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-silver/70 hover:text-primary disabled:opacity-40"
           >
-            <History className="h-3 w-3" />
+            <HistoryIcon className="h-3 w-3" />
             {versions.length === 0
               ? "No revisions yet"
               : `${versions.length} revision${versions.length === 1 ? "" : "s"}`}
