@@ -71,11 +71,12 @@ function GaragePage() {
       const remote: SavedDesign[] = ((data ?? []) as any[]).map((row) => ({
         id: row.id,
         product: row.product,
-        state: (row.design ?? {}) as Record<string, unknown>,
+        state: stripVersions((row.design ?? {}) as VersionedDesign),
         price: Number(row.price ?? 0),
         title: row.title ?? undefined,
         at: new Date(row.created_at).getTime(),
         remote: true,
+        versions: getVersions((row.design ?? {}) as VersionedDesign),
       }));
       setDesigns([...remote, ...local.filter((l) => !remote.some((r) => r.id === l.id))]);
     } catch {
