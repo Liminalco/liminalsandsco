@@ -239,6 +239,7 @@ function GaragePage() {
                 onRename={renameDesign}
                 onLoad={loadInStudio}
                 onAddToCart={addToCart}
+                onRestore={restoreDesignVersion}
                 editingId={editingId}
                 editTitle={editTitle}
                 setEditTitle={setEditTitle}
