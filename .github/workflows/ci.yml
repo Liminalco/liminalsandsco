@@ -18,6 +18,8 @@ jobs:
         run: bunx tsgo --noEmit || bunx tsc --noEmit
       - name: Lint
         run: bun run lint
+      - name: Unit tests
+        run: bun run test
       - name: Clean stale build output
         run: bun run clean
       - name: Build
