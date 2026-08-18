@@ -369,6 +369,47 @@ function DesignCard({
             <Trash2 className="h-3 w-3" />
           </button>
         </div>
+
+        {/* Revision history */}
+        <div className="mt-3 border-t border-border/60 pt-3">
+          <button
+            type="button"
+            onClick={() => setHistoryOpen((o) => !o)}
+            disabled={versions.length === 0}
+            aria-expanded={historyOpen}
+            className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-silver/70 hover:text-primary disabled:opacity-40"
+          >
+            <History className="h-3 w-3" />
+            {versions.length === 0
+              ? "No revisions yet"
+              : `${versions.length} revision${versions.length === 1 ? "" : "s"}`}
+          </button>
+
+          {historyOpen && versions.length > 0 && (
+            <ul className="mt-2 space-y-1.5" data-testid="revision-list">
+              {versions.map((v) => (
+                <li
+                  key={v.id}
+                  className="flex items-center justify-between gap-2 rounded-md border border-border/50 px-2 py-1.5"
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate text-xs font-medium">{v.label}</span>
+                    <span className="block font-mono text-[10px] text-silver/60">
+                      {formatVersionDate(v.at)} · ${Number(v.price || 0).toFixed(0)}
+                    </span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => onRestore(design.id, v.id)}
+                    className="shrink-0 inline-flex items-center gap-1 px-2 py-1 border border-border/60 text-[10px] font-mono uppercase tracking-wider rounded-md hover:border-primary"
+                  >
+                    <RotateCcw className="h-3 w-3" /> Restore
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
     </div>
   );
