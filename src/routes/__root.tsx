@@ -7,7 +7,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { sanitizeError } from "@/lib/error-sanitize";
 import {
   supabase,
@@ -148,7 +148,11 @@ function RootShell({ children }: { children: React.ReactNode }) {
  * features still render their "degraded mode" placeholders underneath.
  */
 function BackendBanner() {
-  if (isSupabaseConfigured) return null;
+  // Render only after hydration: config detection can differ between the
+  // server render and the browser, which would trip a hydration mismatch.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted || isSupabaseConfigured) return null;
   return (
     <div
       role="status"

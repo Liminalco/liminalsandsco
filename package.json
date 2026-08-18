@@ -14,7 +14,8 @@
     "test:e2e": "playwright test",
     "clean": "rm -rf dist .output .wrangler/deploy",
     "prebuild": "rm -rf dist .output .wrangler/deploy",
-    "dist-check": "node scripts/dist-check.mjs"
+    "dist-check": "node scripts/dist-check.mjs",
+    "test": "vitest run"
   },
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.42.4",
@@ -95,6 +96,7 @@
     "prettier": "^3.7.3",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.56.1",
-    "vite": "^7.3.1"
+    "vite": "^7.3.1",
+    "vitest": "^4.1.10"
   }
 }

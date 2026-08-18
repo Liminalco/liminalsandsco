@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect, useCallback } from "react";
-import { Trash2, Pencil, ShoppingCart, ExternalLink, Plus, Loader as Loader2 } from "lucide-react";
+import { Trash2, Pencil, ShoppingCart, ExternalLink, Plus, Loader as Loader2, History as HistoryIcon, RotateCcw } from "lucide-react";
 import { Nav } from "@/components/site/Nav";
 import { Footer } from "@/components/site/Footer";
 import { supabase } from "@/integrations/supabase/client";
@@ -56,7 +56,12 @@ function GaragePage() {
     const key = `liminal:garage:${user.id}`;
     const local: SavedDesign[] = (() => {
       try {
-        return JSON.parse(localStorage.getItem(key) || "[]");
+        const raw: SavedDesign[] = JSON.parse(localStorage.getItem(key) || "[]");
+        return raw.map((d) => ({
+          ...d,
+          state: stripVersions(d.state as VersionedDesign),
+          versions: d.versions ?? getVersions(d.state as VersionedDesign),
+        }));
       } catch {
         return [];
       }
@@ -71,11 +76,12 @@ function GaragePage() {
       const remote: SavedDesign[] = ((data ?? []) as any[]).map((row) => ({
         id: row.id,
         product: row.product,
-        state: (row.design ?? {}) as Record<string, unknown>,
+        state: stripVersions((row.design ?? {}) as VersionedDesign),
         price: Number(row.price ?? 0),
         title: row.title ?? undefined,
         at: new Date(row.created_at).getTime(),
         remote: true,
+        versions: getVersions((row.design ?? {}) as VersionedDesign),
       }));
       setDesigns([...remote, ...local.filter((l) => !remote.some((r) => r.id === l.id))]);
     } catch {
@@ -118,6 +124,41 @@ function GaragePage() {
     }
     setEditingId(null);
     toast.success("Design renamed");
+  };
+
+  /** Restores a previous revision, archiving whatever is current. */
+  const restoreDesignVersion = async (id: string, versionId: string) => {
+    const target = designs.find((d) => d.id === id);
+    if (!target) return;
+    const full: VersionedDesign = { ...target.state, __versions: target.versions ?? [] };
+    const restored = restoreVersion(full, versionId, target.price);
+    if (!restored) {
+      toast.error("That revision is no longer available");
+      return;
+    }
+    const nextState = stripVersions(restored);
+    const nextVersions = getVersions(restored);
+    const updated = designs.map((d) =>
+      d.id === id ? { ...d, state: nextState, versions: nextVersions } : d,
+    );
+    setDesigns(updated);
+    if (user) {
+      localStorage.setItem(
+        `liminal:garage:${user.id}`,
+        JSON.stringify(updated.filter((d) => !d.remote)),
+      );
+    }
+    if (target.remote) {
+      const { error } = await supabase
+        .from("saved_designs" as any)
+        .update({ design: restored })
+        .eq("id", id);
+      if (error) {
+        toast.error("Could not save the restored revision");
+        return;
+      }
+    }
+    toast.success("Revision restored");
   };
 
   const loadInStudio = (design: SavedDesign) => {
@@ -198,6 +239,7 @@ function GaragePage() {
                 onRename={renameDesign}
                 onLoad={loadInStudio}
                 onAddToCart={addToCart}
+                onRestore={restoreDesignVersion}
                 editingId={editingId}
                 editTitle={editTitle}
                 setEditTitle={setEditTitle}
@@ -218,6 +260,7 @@ function DesignCard({
   onRename,
   onLoad,
   onAddToCart,
+  onRestore,
   editingId,
   editTitle,
   setEditTitle,
@@ -228,6 +271,7 @@ function DesignCard({
   onRename: (id: string, title: string) => void;
   onLoad: (d: SavedDesign) => void;
   onAddToCart: (d: SavedDesign) => void;
+  onRestore: (id: string, versionId: string) => void;
   editingId: string | null;
   editTitle: string;
   setEditTitle: (s: string) => void;
@@ -235,6 +279,8 @@ function DesignCard({
 }) {
   const state = design.state as { bg?: string; ink?: string; texture?: string; layers?: { kind: string; text?: string; src?: string }[] };
   const title = design.title || `${design.product} design`;
+  const versions = design.versions ?? [];
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   return (
     <div className="border border-border/60 bg-card rounded-lg overflow-hidden">
@@ -322,6 +368,47 @@ function DesignCard({
           >
             <Trash2 className="h-3 w-3" />
           </button>
+        </div>
+
+        {/* Revision history */}
+        <div className="mt-3 border-t border-border/60 pt-3">
+          <button
+            type="button"
+            onClick={() => setHistoryOpen((o) => !o)}
+            disabled={versions.length === 0}
+            aria-expanded={historyOpen}
+            className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-silver/70 hover:text-primary disabled:opacity-40"
+          >
+            <HistoryIcon className="h-3 w-3" />
+            {versions.length === 0
+              ? "No revisions yet"
+              : `${versions.length} revision${versions.length === 1 ? "" : "s"}`}
+          </button>
+
+          {historyOpen && versions.length > 0 && (
+            <ul className="mt-2 space-y-1.5" data-testid="revision-list">
+              {versions.map((v) => (
+                <li
+                  key={v.id}
+                  className="flex items-center justify-between gap-2 rounded-md border border-border/50 px-2 py-1.5"
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate text-xs font-medium">{v.label}</span>
+                    <span className="block font-mono text-[10px] text-silver/60">
+                      {formatVersionDate(v.at)} · ${Number(v.price || 0).toFixed(0)}
+                    </span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => onRestore(design.id, v.id)}
+                    className="shrink-0 inline-flex items-center gap-1 px-2 py-1 border border-border/60 text-[10px] font-mono uppercase tracking-wider rounded-md hover:border-primary"
+                  >
+                    <RotateCcw className="h-3 w-3" /> Restore
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
     </div>
