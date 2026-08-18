@@ -126,6 +126,41 @@ function GaragePage() {
     toast.success("Design renamed");
   };
 
+  /** Restores a previous revision, archiving whatever is current. */
+  const restoreDesignVersion = async (id: string, versionId: string) => {
+    const target = designs.find((d) => d.id === id);
+    if (!target) return;
+    const full: VersionedDesign = { ...target.state, __versions: target.versions ?? [] };
+    const restored = restoreVersion(full, versionId, target.price);
+    if (!restored) {
+      toast.error("That revision is no longer available");
+      return;
+    }
+    const nextState = stripVersions(restored);
+    const nextVersions = getVersions(restored);
+    const updated = designs.map((d) =>
+      d.id === id ? { ...d, state: nextState, versions: nextVersions } : d,
+    );
+    setDesigns(updated);
+    if (user) {
+      localStorage.setItem(
+        `liminal:garage:${user.id}`,
+        JSON.stringify(updated.filter((d) => !d.remote)),
+      );
+    }
+    if (target.remote) {
+      const { error } = await supabase
+        .from("saved_designs" as any)
+        .update({ design: restored })
+        .eq("id", id);
+      if (error) {
+        toast.error("Could not save the restored revision");
+        return;
+      }
+    }
+    toast.success("Revision restored");
+  };
+
   const loadInStudio = (design: SavedDesign) => {
     const encoded = btoa(unescape(encodeURIComponent(JSON.stringify({ product: design.product, state: design.state }))));
     navigate({ to: "/design-studio", search: { d: encoded } });
