@@ -260,6 +260,7 @@ function DesignCard({
   onRename,
   onLoad,
   onAddToCart,
+  onRestore,
   editingId,
   editTitle,
   setEditTitle,
@@ -270,6 +271,7 @@ function DesignCard({
   onRename: (id: string, title: string) => void;
   onLoad: (d: SavedDesign) => void;
   onAddToCart: (d: SavedDesign) => void;
+  onRestore: (id: string, versionId: string) => void;
   editingId: string | null;
   editTitle: string;
   setEditTitle: (s: string) => void;
@@ -277,6 +279,8 @@ function DesignCard({
 }) {
   const state = design.state as { bg?: string; ink?: string; texture?: string; layers?: { kind: string; text?: string; src?: string }[] };
   const title = design.title || `${design.product} design`;
+  const versions = design.versions ?? [];
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   return (
     <div className="border border-border/60 bg-card rounded-lg overflow-hidden">
