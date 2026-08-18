@@ -56,7 +56,12 @@ function GaragePage() {
     const key = `liminal:garage:${user.id}`;
     const local: SavedDesign[] = (() => {
       try {
-        return JSON.parse(localStorage.getItem(key) || "[]");
+        const raw: SavedDesign[] = JSON.parse(localStorage.getItem(key) || "[]");
+        return raw.map((d) => ({
+          ...d,
+          state: stripVersions(d.state as VersionedDesign),
+          versions: d.versions ?? getVersions(d.state as VersionedDesign),
+        }));
       } catch {
         return [];
       }
