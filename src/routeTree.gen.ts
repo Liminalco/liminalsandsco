@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SplatRouteImport } from './routes/$'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AcademyRouteImport } from './routes/academy'
 import { Route as AccountRouteImport } from './routes/account'
@@ -23,10 +24,12 @@ import { Route as MembershipRouteImport } from './routes/membership'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as ShopRouteImport } from './routes/shop'
+import { Route as StudioRouteImport } from './routes/studio'
 import { Route as SupportRouteImport } from './routes/support'
 import { Route as WishlistRouteImport } from './routes/wishlist'
 import { Route as AccountGarageRouteImport } from './routes/account.garage'
 import { Route as AccountOrdersRouteImport } from './routes/account.orders'
+import { Route as AccountResetPasswordRouteImport } from './routes/account_.reset-password'
 import { Route as AdminAuditLogsRouteImport } from './routes/admin.audit-logs'
 import { Route as AdminDiagnosticsRouteImport } from './routes/admin.diagnostics'
 import { Route as AdminEventsRouteImport } from './routes/admin.events'
@@ -48,6 +51,11 @@ import { Route as AdminSettingsShopifyRouteImport } from './routes/admin.setting
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SplatRoute = SplatRouteImport.update({
+  id: '/$',
+  path: '/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -115,6 +123,11 @@ const ShopRoute = ShopRouteImport.update({
   path: '/shop',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StudioRoute = StudioRouteImport.update({
+  id: '/studio',
+  path: '/studio',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SupportRoute = SupportRouteImport.update({
   id: '/support',
   path: '/support',
@@ -134,6 +147,11 @@ const AccountOrdersRoute = AccountOrdersRouteImport.update({
   id: '/orders',
   path: '/orders',
   getParentRoute: () => AccountRoute,
+} as any)
+const AccountResetPasswordRoute = AccountResetPasswordRouteImport.update({
+  id: '/account_/reset-password',
+  path: '/account/reset-password',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AdminAuditLogsRoute = AdminAuditLogsRouteImport.update({
   id: '/audit-logs',
@@ -223,6 +241,7 @@ const AdminSettingsShopifyRoute = AdminSettingsShopifyRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/$': typeof SplatRoute
   '/about': typeof AboutRoute
   '/academy': typeof AcademyRoute
   '/account': typeof AccountRouteWithChildren
@@ -236,10 +255,12 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
   '/shop': typeof ShopRouteWithChildren
+  '/studio': typeof StudioRoute
   '/support': typeof SupportRoute
   '/wishlist': typeof WishlistRoute
   '/account/garage': typeof AccountGarageRoute
   '/account/orders': typeof AccountOrdersRoute
+  '/account/reset-password': typeof AccountResetPasswordRoute
   '/admin/audit-logs': typeof AdminAuditLogsRoute
   '/admin/diagnostics': typeof AdminDiagnosticsRoute
   '/admin/events': typeof AdminEventsRoute
@@ -260,6 +281,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/$': typeof SplatRoute
   '/about': typeof AboutRoute
   '/academy': typeof AcademyRoute
   '/account': typeof AccountRouteWithChildren
@@ -273,10 +295,12 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
   '/shop': typeof ShopRouteWithChildren
+  '/studio': typeof StudioRoute
   '/support': typeof SupportRoute
   '/wishlist': typeof WishlistRoute
   '/account/garage': typeof AccountGarageRoute
   '/account/orders': typeof AccountOrdersRoute
+  '/account/reset-password': typeof AccountResetPasswordRoute
   '/admin/audit-logs': typeof AdminAuditLogsRoute
   '/admin/diagnostics': typeof AdminDiagnosticsRoute
   '/admin/events': typeof AdminEventsRoute
@@ -298,6 +322,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/$': typeof SplatRoute
   '/about': typeof AboutRoute
   '/academy': typeof AcademyRoute
   '/account': typeof AccountRouteWithChildren
@@ -311,10 +336,12 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
   '/shop': typeof ShopRouteWithChildren
+  '/studio': typeof StudioRoute
   '/support': typeof SupportRoute
   '/wishlist': typeof WishlistRoute
   '/account/garage': typeof AccountGarageRoute
   '/account/orders': typeof AccountOrdersRoute
+  '/account_/reset-password': typeof AccountResetPasswordRoute
   '/admin/audit-logs': typeof AdminAuditLogsRoute
   '/admin/diagnostics': typeof AdminDiagnosticsRoute
   '/admin/events': typeof AdminEventsRoute
@@ -337,6 +364,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/$'
     | '/about'
     | '/academy'
     | '/account'
@@ -350,10 +378,12 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/search'
     | '/shop'
+    | '/studio'
     | '/support'
     | '/wishlist'
     | '/account/garage'
     | '/account/orders'
+    | '/account/reset-password'
     | '/admin/audit-logs'
     | '/admin/diagnostics'
     | '/admin/events'
@@ -374,6 +404,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/$'
     | '/about'
     | '/academy'
     | '/account'
@@ -387,10 +418,12 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/search'
     | '/shop'
+    | '/studio'
     | '/support'
     | '/wishlist'
     | '/account/garage'
     | '/account/orders'
+    | '/account/reset-password'
     | '/admin/audit-logs'
     | '/admin/diagnostics'
     | '/admin/events'
@@ -411,6 +444,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/$'
     | '/about'
     | '/academy'
     | '/account'
@@ -424,10 +458,12 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/search'
     | '/shop'
+    | '/studio'
     | '/support'
     | '/wishlist'
     | '/account/garage'
     | '/account/orders'
+    | '/account_/reset-password'
     | '/admin/audit-logs'
     | '/admin/diagnostics'
     | '/admin/events'
@@ -449,6 +485,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  SplatRoute: typeof SplatRoute
   AboutRoute: typeof AboutRoute
   AcademyRoute: typeof AcademyRoute
   AccountRoute: typeof AccountRouteWithChildren
@@ -462,8 +499,10 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SearchRoute: typeof SearchRoute
   ShopRoute: typeof ShopRouteWithChildren
+  StudioRoute: typeof StudioRoute
   SupportRoute: typeof SupportRoute
   WishlistRoute: typeof WishlistRoute
+  AccountResetPasswordRoute: typeof AccountResetPasswordRoute
   LegalLiabilityRoute: typeof LegalLiabilityRoute
   LegalPrivacyRoute: typeof LegalPrivacyRoute
   LegalReturnsRoute: typeof LegalReturnsRoute
@@ -477,6 +516,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$': {
+      id: '/$'
+      path: '/$'
+      fullPath: '/$'
+      preLoaderRoute: typeof SplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/about': {
@@ -570,6 +616,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShopRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/studio': {
+      id: '/studio'
+      path: '/studio'
+      fullPath: '/studio'
+      preLoaderRoute: typeof StudioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/support': {
       id: '/support'
       path: '/support'
@@ -597,6 +650,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/account/orders'
       preLoaderRoute: typeof AccountOrdersRouteImport
       parentRoute: typeof AccountRoute
+    }
+    '/account_/reset-password': {
+      id: '/account_/reset-password'
+      path: '/account/reset-password'
+      fullPath: '/account/reset-password'
+      preLoaderRoute: typeof AccountResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/admin/audit-logs': {
       id: '/admin/audit-logs'
@@ -785,6 +845,7 @@ const ShopRouteWithChildren = ShopRoute._addFileChildren(ShopRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  SplatRoute: SplatRoute,
   AboutRoute: AboutRoute,
   AcademyRoute: AcademyRoute,
   AccountRoute: AccountRouteWithChildren,
@@ -798,8 +859,10 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SearchRoute: SearchRoute,
   ShopRoute: ShopRouteWithChildren,
+  StudioRoute: StudioRoute,
   SupportRoute: SupportRoute,
   WishlistRoute: WishlistRoute,
+  AccountResetPasswordRoute: AccountResetPasswordRoute,
   LegalLiabilityRoute: LegalLiabilityRoute,
   LegalPrivacyRoute: LegalPrivacyRoute,
   LegalReturnsRoute: LegalReturnsRoute,
