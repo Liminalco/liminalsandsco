@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Undo2, Redo2, Type as TypeIcon, Image as ImageIcon, Layers, Sparkles, Trash2, Lock, Clock as Unlock, ArrowUp, ArrowDown, Crosshair, Maximize2, RotateCw, Download, Link2, Save, Upload, Palette } from "lucide-react";
+import { Undo2, Redo2, Type as TypeIcon, Image as ImageIcon, Layers, Sparkles, Trash2, Lock, Clock as Unlock, ArrowUp, ArrowDown, Crosshair, Maximize2, RotateCw, Download, Link2, Save, Upload, Palette, ChevronRight, FlipHorizontal2, FlipVertical2, AlignLeft, AlignCenter, AlignRight } from "lucide-react";
 import { Nav } from "@/components/site/Nav";
 import { Footer } from "@/components/site/Footer";
 import { Button } from "@/components/ui/button";
@@ -65,15 +65,26 @@ interface Layer {
   scale: number;
   rotation: number;
   locked?: boolean;
+  flipH?: boolean;
+  flipV?: boolean;
   // text
   text?: string;
   font?: string;
   color?: string;
   bold?: boolean;
   italic?: boolean;
+  fontSize?: number;
+  lineHeight?: number;
+  letterSpacing?: number;
+  align?: "left" | "center" | "right";
+  strokeWidth?: number;
+  strokeColor?: string;
+  shadow?: number;
+  shadowColor?: string;
   // image / sticker
   src?: string;
 }
+
 interface DesignState {
   product: ProductKey;
   face: FaceKey;
@@ -101,7 +112,43 @@ const PRODUCTS: Record<
 };
 
 const BRAND_COLORS = ["#0b0b0f", "#f4f1ea", "#ff5b1f", "#1f6feb", "#3ea770", "#e2b23a", "#d43f5b"];
-const FONTS = ["Inter, sans-serif", "Georgia, serif", "'Courier New', monospace", "Impact, sans-serif"];
+// Font customization engine — grouped by voice so beginners pick a mood, not a family.
+const FONT_GROUPS: { group: string; fonts: { label: string; value: string }[] }[] = [
+  {
+    group: "Streetwear",
+    fonts: [
+      { label: "Impact Block", value: "Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif" },
+      { label: "Grotesk Bold", value: "'Arial Black', 'Helvetica Neue', sans-serif" },
+      { label: "Clean Sans", value: "Inter, system-ui, sans-serif" },
+    ],
+  },
+  {
+    group: "Serif",
+    fonts: [
+      { label: "Editorial Serif", value: "Georgia, 'Times New Roman', serif" },
+      { label: "Display Serif", value: "'Playfair Display', Georgia, serif" },
+      { label: "Slab", value: "'Rockwell', 'Courier Bold', Georgia, serif" },
+    ],
+  },
+  {
+    group: "Script",
+    fonts: [
+      { label: "Signature Script", value: "'Brush Script MT', 'Segoe Script', cursive" },
+      { label: "Casual Script", value: "'Comic Sans MS', 'Segoe Print', cursive" },
+      { label: "Formal Script", value: "'Snell Roundhand', 'Apple Chancery', cursive" },
+    ],
+  },
+  {
+    group: "Cyber",
+    fonts: [
+      { label: "Terminal Mono", value: "'Courier New', ui-monospace, monospace" },
+      { label: "Console", value: "Consolas, 'Andale Mono', monospace" },
+      { label: "Tech Sans", value: "'Trebuchet MS', Verdana, sans-serif" },
+    ],
+  },
+];
+const FONTS = FONT_GROUPS.flatMap((g) => g.fonts.map((f) => f.value));
+
 const TEXTURES = [
   { key: "none", label: "None" },
   { key: "grip", label: "Grip Tape" },
@@ -656,23 +703,34 @@ function DesignStudioPage() {
                   <TypeIcon className="mr-1 h-4 w-4" /> Add text
                 </Button>
                 {selected?.kind === "text" && (
-                  <div className="space-y-2">
-                    <Input
+                  <div className="space-y-3" data-testid="text-engine">
+                    <textarea
+                      rows={2}
+                      className="w-full resize-y rounded-md border border-border bg-background p-2 text-sm"
                       value={selected.text || ""}
+                      aria-label="Text content"
                       onChange={(e) => patchLayer(selected.id, { text: e.target.value })}
                     />
-                    <select
-                      className="w-full rounded-md border border-border bg-background p-2 text-sm"
-                      value={selected.font}
-                      onChange={(e) => patchLayer(selected.id, { font: e.target.value })}
-                    >
-                      {FONTS.map((f) => (
-                        <option key={f} value={f} style={{ fontFamily: f }}>
-                          {f.split(",")[0]}
-                        </option>
-                      ))}
-                    </select>
-                    <div className="flex gap-2">
+                    <Field label="Font family">
+                      <select
+                        className="w-full rounded-md border border-border bg-background p-2 text-sm"
+                        value={selected.font}
+                        aria-label="Font family"
+                        onChange={(e) => patchLayer(selected.id, { font: e.target.value })}
+                      >
+                        {FONT_GROUPS.map((g) => (
+                          <optgroup key={g.group} label={g.group}>
+                            {g.fonts.map((f) => (
+                              <option key={f.value} value={f.value} style={{ fontFamily: f.value }}>
+                                {f.label}
+                              </option>
+                            ))}
+                          </optgroup>
+                        ))}
+                      </select>
+                    </Field>
+
+                    <div className="flex flex-wrap gap-2">
                       <Button
                         variant={selected.bold ? "default" : "outline"}
                         size="sm"
@@ -687,15 +745,107 @@ function DesignStudioPage() {
                       >
                         <span className="italic">I</span>
                       </Button>
+                      {(
+                        [
+                          ["left", AlignLeft],
+                          ["center", AlignCenter],
+                          ["right", AlignRight],
+                        ] as const
+                      ).map(([a, Icon]) => (
+                        <Button
+                          key={a}
+                          size="sm"
+                          aria-label={`Align ${a}`}
+                          variant={(selected.align || "center") === a ? "default" : "outline"}
+                          onClick={() => patchLayer(selected.id, { align: a })}
+                        >
+                          <Icon className="h-4 w-4" />
+                        </Button>
+                      ))}
                       <Input
                         type="color"
                         className="h-9 w-14 p-1"
-                        value={selected.color || "#000"}
+                        aria-label="Text color"
+                        value={selected.color || "#000000"}
                         onChange={(e) => patchLayer(selected.id, { color: e.target.value })}
                       />
                     </div>
+
+                    <NumField
+                      label="Font size"
+                      suffix="px"
+                      min={8}
+                      max={140}
+                      step={1}
+                      value={selected.fontSize ?? 24}
+                      onChange={(v) => patchLayer(selected.id, { fontSize: v })}
+                    />
+                    <NumField
+                      label="Line height"
+                      min={0.7}
+                      max={3}
+                      step={0.05}
+                      value={selected.lineHeight ?? 1.15}
+                      onChange={(v) => patchLayer(selected.id, { lineHeight: v })}
+                    />
+                    <NumField
+                      label="Letter spacing"
+                      suffix="px"
+                      min={-8}
+                      max={40}
+                      step={0.5}
+                      value={selected.letterSpacing ?? 0}
+                      onChange={(v) => patchLayer(selected.id, { letterSpacing: v })}
+                    />
+
+                    <div className="space-y-2 rounded-md border border-border p-2.5">
+                      <div className="text-xs uppercase tracking-wider text-muted-foreground">
+                        Stroke &amp; shadow
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="color"
+                          className="h-9 w-14 p-1"
+                          aria-label="Stroke color"
+                          value={selected.strokeColor || "#000000"}
+                          onChange={(e) => patchLayer(selected.id, { strokeColor: e.target.value })}
+                        />
+                        <div className="flex-1">
+                          <NumField
+                            label="Stroke width"
+                            suffix="px"
+                            min={0}
+                            max={12}
+                            step={0.5}
+                            value={selected.strokeWidth ?? 0}
+                            onChange={(v) => patchLayer(selected.id, { strokeWidth: v })}
+                          />
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="color"
+                          className="h-9 w-14 p-1"
+                          aria-label="Shadow color"
+                          value={selected.shadowColor || "#000000"}
+                          onChange={(e) => patchLayer(selected.id, { shadowColor: e.target.value })}
+                        />
+                        <div className="flex-1">
+                          <NumField
+                            label="Shadow blur"
+                            suffix="px"
+                            min={0}
+                            max={30}
+                            step={1}
+                            value={selected.shadow ?? 0}
+                            onChange={(v) => patchLayer(selected.id, { shadow: v })}
+                          />
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
+
               </TabsContent>
 
               <TabsContent value="graphics" className="mt-3 space-y-3">
@@ -823,17 +973,24 @@ function DesignStudioPage() {
                       </p>
                     )
                   ) : (
-                    <Tabs defaultValue={STICKER_CATEGORIES[0].id}>
-                      <TabsList className="grid w-full grid-cols-4 h-auto">
-                        {STICKER_CATEGORIES.map((cat) => (
-                          <TabsTrigger key={cat.id} value={cat.id} className="text-[10px] px-1 py-1.5">
-                            {cat.label.split(" ")[0]}
-                          </TabsTrigger>
-                        ))}
-                      </TabsList>
-                      {STICKER_CATEGORIES.map((cat) => (
-                        <TabsContent key={cat.id} value={cat.id} className="mt-2">
-                          <div className="grid grid-cols-3 gap-2">
+                    <div className="space-y-1.5" data-testid="sticker-themes">
+                      {STICKER_CATEGORIES.map((cat, i) => (
+                        <details
+                          key={cat.id}
+                          open={i === 0}
+                          data-testid={`sticker-theme-${cat.id}`}
+                          className="group rounded-md border border-border bg-background/40"
+                        >
+                          <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-2.5 py-2 text-[11px] uppercase tracking-wider text-muted-foreground transition hover:text-foreground">
+                            <span className="flex items-center gap-1.5">
+                              <ChevronRight className="h-3.5 w-3.5 transition-transform group-open:rotate-90" />
+                              {cat.label}
+                            </span>
+                            <span className="font-mono text-[10px] text-muted-foreground/70">
+                              {cat.stickers.length}
+                            </span>
+                          </summary>
+                          <div className="grid grid-cols-3 gap-2 border-t border-border p-2">
                             {cat.stickers.map((s) => (
                               <button
                                 key={s.id}
@@ -846,10 +1003,11 @@ function DesignStudioPage() {
                               />
                             ))}
                           </div>
-                        </TabsContent>
+                        </details>
                       ))}
-                    </Tabs>
+                    </div>
                   )}
+
                 </div>
                 {/* Metallic quick presets */}
                 <div>

@@ -498,7 +498,7 @@ const NATURE: Decal[] = [
 
 const Y2K: Decal[] = [
   d("y2-chrome-star", "Chrome Star", "y2k", ["chrome", "star", "2000s", "shine"],
-    wrap(`<defs><linearGradient id='y2cg' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='#f2f6ff'/><stop offset='.45' stop-color='#8e9db8'/><stop offset='1' stop-color='#232a3a'/></linearGradient></defs><polygon points='50,4 61,38 96,38 68,58 78,92 50,72 22,92 32,58 4,38 39,38' fill='url(#y2cg)' stroke='#0b0b0f' stroke-width='2'/>`, 100, 100, ),
+    wrap(`<defs><linearGradient id='y2cg' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='#f2f6ff'/><stop offset='.45' stop-color='#8e9db8'/><stop offset='1' stop-color='#232a3a'/></linearGradient></defs><polygon points='50,4 61,38 96,38 68,58 78,92 50,72 22,92 32,58 4,38 39,38' fill='url(#y2cg)' stroke='#0b0b0f' stroke-width='2'/>`, 100, 100)),
   d("y2-sparkle-4", "Four Sparkle", "y2k", ["sparkle", "shine", "glitter"],
     wrap(`<path d='M50 2 58 42 98 50 58 58 50 98 42 58 2 50 42 42Z' fill='currentColor'/>`)),
   d("y2-sparkle-trio", "Sparkle Trio", "y2k", ["sparkle", "trio", "glitter"],

@@ -1,12 +1,15 @@
 // Categorized vector sticker library for the Design Studio.
 // SVGs use currentColor so they recolor to the active ink instantly.
 
+import { DECALS, DECAL_CATEGORY_LABELS, type DecalCategoryId } from "./decals";
+
 export type Sticker = { id: string; label: string; svg: string };
 export type StickerCategory = { id: string; label: string; stickers: Sticker[] };
 
 const s = (id: string, label: string, svg: string): Sticker => ({ id, label, svg });
 
-export const STICKER_CATEGORIES: StickerCategory[] = [
+const BASE_CATEGORIES: StickerCategory[] = [
+
   {
     id: "stars",
     label: "Stars & Space",
@@ -173,7 +176,29 @@ export const STICKER_CATEGORIES: StickerCategory[] = [
   },
 ];
 
+// ---------- Decal dataset bridge ----------
+// The 200+ mark decal dataset in ./decals is folded into the sticker book so
+// search, autocomplete and tag filters resolve against one unified pool.
+
+const BASE_IDS = new Set(BASE_CATEGORIES.flatMap((c) => c.stickers.map((x) => x.id)));
+
+const DECAL_CATEGORIES_AS_STICKERS: StickerCategory[] = (
+  Object.keys(DECAL_CATEGORY_LABELS) as DecalCategoryId[]
+).map((id) => ({
+  id: `decal-${id}`,
+  label: DECAL_CATEGORY_LABELS[id],
+  stickers: DECALS.filter((dec) => dec.category === id && !BASE_IDS.has(dec.id)).map((dec) =>
+    s(dec.id, dec.name, dec.svgData),
+  ),
+}));
+
+export const STICKER_CATEGORIES: StickerCategory[] = [
+  ...BASE_CATEGORIES,
+  ...DECAL_CATEGORIES_AS_STICKERS.filter((c) => c.stickers.length > 0),
+];
+
 export const ALL_STICKERS: Sticker[] = STICKER_CATEGORIES.flatMap((c) => c.stickers);
+
 
 export function findSticker(id: string): Sticker | undefined {
   return ALL_STICKERS.find((s) => s.id === id);
@@ -262,6 +287,14 @@ export const STICKER_TAGS: Record<string, string[]> = {
   quote: ["quote", "quotation", "type", "serif", "editorial"],
 };
 
+// Fold decal tags into the same lookup table so tag filters + autocomplete
+// cover the full 200+ dataset.
+for (const dec of DECALS) {
+  if (STICKER_TAGS[dec.id]) continue;
+  STICKER_TAGS[dec.id] = [...dec.tags, DECAL_CATEGORY_LABELS[dec.category].toLowerCase()];
+}
+
+
 /** Curated cross-category collections. */
 export type StickerCollection = { id: string; label: string; description: string; stickerIds: string[] };
 
@@ -296,7 +329,16 @@ export const STICKER_COLLECTIONS: StickerCollection[] = [
     description: "Frames, rules and type marks",
     stickerIds: ["frame-rect", "badge-hex", "corner-brackets", "dashed-ring", "quote", "amp", "arrow-txt"],
   },
+  // One collection per decal theme, so the 200+ dataset is filterable by theme
+  // from the same chip row and autocomplete surface.
+  ...(Object.keys(DECAL_CATEGORY_LABELS) as DecalCategoryId[]).map((id) => ({
+    id: `theme-${id}`,
+    label: DECAL_CATEGORY_LABELS[id],
+    description: `${DECAL_CATEGORY_LABELS[id]} decals`,
+    stickerIds: DECALS.filter((dec) => dec.category === id).map((dec) => dec.id),
+  })),
 ];
+
 
 const STOP_WORDS = new Set([
   "a","an","the","some","any","me","my","i","find","show","give","want","need","looking","for",
