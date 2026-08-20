@@ -329,7 +329,16 @@ export const STICKER_COLLECTIONS: StickerCollection[] = [
     description: "Frames, rules and type marks",
     stickerIds: ["frame-rect", "badge-hex", "corner-brackets", "dashed-ring", "quote", "amp", "arrow-txt"],
   },
+  // One collection per decal theme, so the 200+ dataset is filterable by theme
+  // from the same chip row and autocomplete surface.
+  ...(Object.keys(DECAL_CATEGORY_LABELS) as DecalCategoryId[]).map((id) => ({
+    id: `theme-${id}`,
+    label: DECAL_CATEGORY_LABELS[id],
+    description: `${DECAL_CATEGORY_LABELS[id]} decals`,
+    stickerIds: DECALS.filter((dec) => dec.category === id).map((dec) => dec.id),
+  })),
 ];
+
 
 const STOP_WORDS = new Set([
   "a","an","the","some","any","me","my","i","find","show","give","want","need","looking","for",
