@@ -703,23 +703,34 @@ function DesignStudioPage() {
                   <TypeIcon className="mr-1 h-4 w-4" /> Add text
                 </Button>
                 {selected?.kind === "text" && (
-                  <div className="space-y-2">
-                    <Input
+                  <div className="space-y-3" data-testid="text-engine">
+                    <textarea
+                      rows={2}
+                      className="w-full resize-y rounded-md border border-border bg-background p-2 text-sm"
                       value={selected.text || ""}
+                      aria-label="Text content"
                       onChange={(e) => patchLayer(selected.id, { text: e.target.value })}
                     />
-                    <select
-                      className="w-full rounded-md border border-border bg-background p-2 text-sm"
-                      value={selected.font}
-                      onChange={(e) => patchLayer(selected.id, { font: e.target.value })}
-                    >
-                      {FONTS.map((f) => (
-                        <option key={f} value={f} style={{ fontFamily: f }}>
-                          {f.split(",")[0]}
-                        </option>
-                      ))}
-                    </select>
-                    <div className="flex gap-2">
+                    <Field label="Font family">
+                      <select
+                        className="w-full rounded-md border border-border bg-background p-2 text-sm"
+                        value={selected.font}
+                        aria-label="Font family"
+                        onChange={(e) => patchLayer(selected.id, { font: e.target.value })}
+                      >
+                        {FONT_GROUPS.map((g) => (
+                          <optgroup key={g.group} label={g.group}>
+                            {g.fonts.map((f) => (
+                              <option key={f.value} value={f.value} style={{ fontFamily: f.value }}>
+                                {f.label}
+                              </option>
+                            ))}
+                          </optgroup>
+                        ))}
+                      </select>
+                    </Field>
+
+                    <div className="flex flex-wrap gap-2">
                       <Button
                         variant={selected.bold ? "default" : "outline"}
                         size="sm"
@@ -734,15 +745,107 @@ function DesignStudioPage() {
                       >
                         <span className="italic">I</span>
                       </Button>
+                      {(
+                        [
+                          ["left", AlignLeft],
+                          ["center", AlignCenter],
+                          ["right", AlignRight],
+                        ] as const
+                      ).map(([a, Icon]) => (
+                        <Button
+                          key={a}
+                          size="sm"
+                          aria-label={`Align ${a}`}
+                          variant={(selected.align || "center") === a ? "default" : "outline"}
+                          onClick={() => patchLayer(selected.id, { align: a })}
+                        >
+                          <Icon className="h-4 w-4" />
+                        </Button>
+                      ))}
                       <Input
                         type="color"
                         className="h-9 w-14 p-1"
-                        value={selected.color || "#000"}
+                        aria-label="Text color"
+                        value={selected.color || "#000000"}
                         onChange={(e) => patchLayer(selected.id, { color: e.target.value })}
                       />
                     </div>
+
+                    <NumField
+                      label="Font size"
+                      suffix="px"
+                      min={8}
+                      max={140}
+                      step={1}
+                      value={selected.fontSize ?? 24}
+                      onChange={(v) => patchLayer(selected.id, { fontSize: v })}
+                    />
+                    <NumField
+                      label="Line height"
+                      min={0.7}
+                      max={3}
+                      step={0.05}
+                      value={selected.lineHeight ?? 1.15}
+                      onChange={(v) => patchLayer(selected.id, { lineHeight: v })}
+                    />
+                    <NumField
+                      label="Letter spacing"
+                      suffix="px"
+                      min={-8}
+                      max={40}
+                      step={0.5}
+                      value={selected.letterSpacing ?? 0}
+                      onChange={(v) => patchLayer(selected.id, { letterSpacing: v })}
+                    />
+
+                    <div className="space-y-2 rounded-md border border-border p-2.5">
+                      <div className="text-xs uppercase tracking-wider text-muted-foreground">
+                        Stroke &amp; shadow
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="color"
+                          className="h-9 w-14 p-1"
+                          aria-label="Stroke color"
+                          value={selected.strokeColor || "#000000"}
+                          onChange={(e) => patchLayer(selected.id, { strokeColor: e.target.value })}
+                        />
+                        <div className="flex-1">
+                          <NumField
+                            label="Stroke width"
+                            suffix="px"
+                            min={0}
+                            max={12}
+                            step={0.5}
+                            value={selected.strokeWidth ?? 0}
+                            onChange={(v) => patchLayer(selected.id, { strokeWidth: v })}
+                          />
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="color"
+                          className="h-9 w-14 p-1"
+                          aria-label="Shadow color"
+                          value={selected.shadowColor || "#000000"}
+                          onChange={(e) => patchLayer(selected.id, { shadowColor: e.target.value })}
+                        />
+                        <div className="flex-1">
+                          <NumField
+                            label="Shadow blur"
+                            suffix="px"
+                            min={0}
+                            max={30}
+                            step={1}
+                            value={selected.shadow ?? 0}
+                            onChange={(v) => patchLayer(selected.id, { shadow: v })}
+                          />
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
+
               </TabsContent>
 
               <TabsContent value="graphics" className="mt-3 space-y-3">
