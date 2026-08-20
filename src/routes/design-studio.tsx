@@ -112,7 +112,43 @@ const PRODUCTS: Record<
 };
 
 const BRAND_COLORS = ["#0b0b0f", "#f4f1ea", "#ff5b1f", "#1f6feb", "#3ea770", "#e2b23a", "#d43f5b"];
-const FONTS = ["Inter, sans-serif", "Georgia, serif", "'Courier New', monospace", "Impact, sans-serif"];
+// Font customization engine — grouped by voice so beginners pick a mood, not a family.
+const FONT_GROUPS: { group: string; fonts: { label: string; value: string }[] }[] = [
+  {
+    group: "Streetwear",
+    fonts: [
+      { label: "Impact Block", value: "Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif" },
+      { label: "Grotesk Bold", value: "'Arial Black', 'Helvetica Neue', sans-serif" },
+      { label: "Clean Sans", value: "Inter, system-ui, sans-serif" },
+    ],
+  },
+  {
+    group: "Serif",
+    fonts: [
+      { label: "Editorial Serif", value: "Georgia, 'Times New Roman', serif" },
+      { label: "Display Serif", value: "'Playfair Display', Georgia, serif" },
+      { label: "Slab", value: "'Rockwell', 'Courier Bold', Georgia, serif" },
+    ],
+  },
+  {
+    group: "Script",
+    fonts: [
+      { label: "Signature Script", value: "'Brush Script MT', 'Segoe Script', cursive" },
+      { label: "Casual Script", value: "'Comic Sans MS', 'Segoe Print', cursive" },
+      { label: "Formal Script", value: "'Snell Roundhand', 'Apple Chancery', cursive" },
+    ],
+  },
+  {
+    group: "Cyber",
+    fonts: [
+      { label: "Terminal Mono", value: "'Courier New', ui-monospace, monospace" },
+      { label: "Console", value: "Consolas, 'Andale Mono', monospace" },
+      { label: "Tech Sans", value: "'Trebuchet MS', Verdana, sans-serif" },
+    ],
+  },
+];
+const FONTS = FONT_GROUPS.flatMap((g) => g.fonts.map((f) => f.value));
+
 const TEXTURES = [
   { key: "none", label: "None" },
   { key: "grip", label: "Grip Tape" },
