@@ -65,15 +65,26 @@ interface Layer {
   scale: number;
   rotation: number;
   locked?: boolean;
+  flipH?: boolean;
+  flipV?: boolean;
   // text
   text?: string;
   font?: string;
   color?: string;
   bold?: boolean;
   italic?: boolean;
+  fontSize?: number;
+  lineHeight?: number;
+  letterSpacing?: number;
+  align?: "left" | "center" | "right";
+  strokeWidth?: number;
+  strokeColor?: string;
+  shadow?: number;
+  shadowColor?: string;
   // image / sticker
   src?: string;
 }
+
 interface DesignState {
   product: ProductKey;
   face: FaceKey;
