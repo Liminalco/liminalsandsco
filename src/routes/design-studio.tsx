@@ -823,17 +823,24 @@ function DesignStudioPage() {
                       </p>
                     )
                   ) : (
-                    <Tabs defaultValue={STICKER_CATEGORIES[0].id}>
-                      <TabsList className="grid w-full grid-cols-4 h-auto">
-                        {STICKER_CATEGORIES.map((cat) => (
-                          <TabsTrigger key={cat.id} value={cat.id} className="text-[10px] px-1 py-1.5">
-                            {cat.label.split(" ")[0]}
-                          </TabsTrigger>
-                        ))}
-                      </TabsList>
-                      {STICKER_CATEGORIES.map((cat) => (
-                        <TabsContent key={cat.id} value={cat.id} className="mt-2">
-                          <div className="grid grid-cols-3 gap-2">
+                    <div className="space-y-1.5" data-testid="sticker-themes">
+                      {STICKER_CATEGORIES.map((cat, i) => (
+                        <details
+                          key={cat.id}
+                          open={i === 0}
+                          data-testid={`sticker-theme-${cat.id}`}
+                          className="group rounded-md border border-border bg-background/40"
+                        >
+                          <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-2.5 py-2 text-[11px] uppercase tracking-wider text-muted-foreground transition hover:text-foreground">
+                            <span className="flex items-center gap-1.5">
+                              <ChevronRight className="h-3.5 w-3.5 transition-transform group-open:rotate-90" />
+                              {cat.label}
+                            </span>
+                            <span className="font-mono text-[10px] text-muted-foreground/70">
+                              {cat.stickers.length}
+                            </span>
+                          </summary>
+                          <div className="grid grid-cols-3 gap-2 border-t border-border p-2">
                             {cat.stickers.map((s) => (
                               <button
                                 key={s.id}
@@ -846,10 +853,11 @@ function DesignStudioPage() {
                               />
                             ))}
                           </div>
-                        </TabsContent>
+                        </details>
                       ))}
-                    </Tabs>
+                    </div>
                   )}
+
                 </div>
                 {/* Metallic quick presets */}
                 <div>
