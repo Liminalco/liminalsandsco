@@ -287,6 +287,14 @@ export const STICKER_TAGS: Record<string, string[]> = {
   quote: ["quote", "quotation", "type", "serif", "editorial"],
 };
 
+// Fold decal tags into the same lookup table so tag filters + autocomplete
+// cover the full 200+ dataset.
+for (const dec of DECALS) {
+  if (STICKER_TAGS[dec.id]) continue;
+  STICKER_TAGS[dec.id] = [...dec.tags, DECAL_CATEGORY_LABELS[dec.category].toLowerCase()];
+}
+
+
 /** Curated cross-category collections. */
 export type StickerCollection = { id: string; label: string; description: string; stickerIds: string[] };
 
