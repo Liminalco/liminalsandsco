@@ -1,12 +1,15 @@
 // Categorized vector sticker library for the Design Studio.
 // SVGs use currentColor so they recolor to the active ink instantly.
 
+import { DECALS, DECAL_CATEGORY_LABELS, type DecalCategoryId } from "./decals";
+
 export type Sticker = { id: string; label: string; svg: string };
 export type StickerCategory = { id: string; label: string; stickers: Sticker[] };
 
 const s = (id: string, label: string, svg: string): Sticker => ({ id, label, svg });
 
-export const STICKER_CATEGORIES: StickerCategory[] = [
+const BASE_CATEGORIES: StickerCategory[] = [
+
   {
     id: "stars",
     label: "Stars & Space",
