@@ -114,8 +114,12 @@ export function CommunityPage() {
         console.log("Geolocation error:", err);
         setLocError("Location unavailable, showing default");
       },
-      { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 }
-    );
+        { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 },
+      );
+    } catch (err) {
+      console.warn("Geolocation unavailable:", err);
+      setLocError("Location unavailable, showing default");
+    }
   }, []);
 
   const sortedSpots = useMemo(() => {
