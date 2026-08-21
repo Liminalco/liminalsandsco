@@ -1185,7 +1185,9 @@ function DesignStudioPage() {
                     style={{
                       left: `${l.x}%`,
                       top: `${l.y}%`,
-                      transform: `translate(-50%,-50%) rotate(${l.rotation}deg) scale(${l.scale})`,
+                      transform: `translate(-50%,-50%) rotate(${l.rotation}deg) scale(${
+                        l.scale * (l.flipH ? -1 : 1)
+                      }, ${l.scale * (l.flipV ? -1 : 1)})`,
                     }}
                   >
                     {l.kind === "text" && (
@@ -1195,8 +1197,16 @@ function DesignStudioPage() {
                           color: l.color,
                           fontWeight: l.bold ? 700 : 400,
                           fontStyle: l.italic ? "italic" : "normal",
-                          fontSize: 24,
-                          whiteSpace: "nowrap",
+                          fontSize: l.fontSize ?? 24,
+                          lineHeight: l.lineHeight ?? 1.15,
+                          letterSpacing: `${l.letterSpacing ?? 0}px`,
+                          textAlign: l.align ?? "center",
+                          WebkitTextStrokeWidth: `${l.strokeWidth ?? 0}px`,
+                          WebkitTextStrokeColor: l.strokeColor || "#000000",
+                          textShadow: l.shadow
+                            ? `0 2px ${l.shadow}px ${l.shadowColor || "#000000"}`
+                            : undefined,
+                          whiteSpace: "pre-wrap",
                         }}
                       >
                         {l.text}
