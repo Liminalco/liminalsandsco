@@ -1,30 +1,15 @@
-import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
-
-const NOT_CONFIGURED = {
-  data: { user: null, session: null },
-  error: {
-    message:
-      "Backend configuration missing. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in the project's API Keys tab.",
-  },
-} as const;
+import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Safely sign a user in with email + password.
  *
- * Wraps `supabase.auth.signInWithPassword` in try/catch so that:
- *   - network failures don't bubble up as unhandled exceptions
- *   - missing env vars return the same `{ data, error }` shape as a real failure
+ * Wraps `supabase.auth.signInWithPassword` in try/catch so that
+ * network failures don't bubble up as unhandled exceptions.
  *
  * Caller (a Login form) should display `result.error.message` in a banner
  * rather than failing silently.
  */
-export async function safeSignInWithPassword(
-  email: string,
-  password: string,
-) {
-  if (!isSupabaseConfigured) {
-    return { data: { user: null, session: null }, error: NOT_CONFIGURED.error };
-  }
+export async function safeSignInWithPassword(email: string, password: string) {
   try {
     const result = await supabase.auth.signInWithPassword({ email, password });
     if (result.error) {
@@ -56,9 +41,6 @@ export async function safeSignUp(
   password: string,
   options?: { fullName?: string; redirectTo?: string },
 ) {
-  if (!isSupabaseConfigured) {
-    return { data: { user: null, session: null }, error: NOT_CONFIGURED.error };
-  }
   try {
     const result = await supabase.auth.signUp({
       email,
@@ -90,7 +72,6 @@ export async function safeSignUp(
 
 function humanizeAuthError(raw: string | undefined, action: string): string {
   if (!raw) return `Unable to ${action}. Please try again.`;
-  // Common Supabase auth error messages — map to friendlier copy.
   const lower = raw.toLowerCase();
   if (lower.includes("invalid login credentials")) {
     return "Incorrect email or password.";

@@ -157,7 +157,7 @@ export async function uploadReviewPhoto(file: File): Promise<string> {
     method: "POST",
     headers: {
       Authorization: `Bearer ${session.access_token}`,
-      Apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+      Apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
     },
     body: form,
   });

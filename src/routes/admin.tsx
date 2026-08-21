@@ -302,12 +302,12 @@ function AdminUsers() {
   );
 
   async function callPasswordApi(action: "reset-email" | "force-update", payload: Record<string, unknown>) {
-    const url = `${import.meta.env.VITE_SUPABASE_URL || ""}/functions/v1/admin-password-management`;
+    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-password-management`;
     const res = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || ""}`,
+        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
       },
       body: JSON.stringify({ action, ...payload }),
     });
