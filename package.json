@@ -15,7 +15,8 @@
     "clean": "rm -rf dist .output .wrangler/deploy",
     "prebuild": "rm -rf dist .output .wrangler/deploy",
     "dist-check": "node scripts/dist-check.mjs",
-    "test": "vitest run"
+    "test": "vitest run",
+    "validate:decals": "node scripts/validate-decals.mjs"
   },
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.42.4",
