@@ -1316,26 +1316,83 @@ function DesignStudioPage() {
 
             {selected && (
               <div className="space-y-3 rounded-lg border border-border bg-card p-3">
-                <div className="text-sm font-medium">Selected</div>
-                <div>
-                  <Label className="text-xs">Scale</Label>
-                  <Slider
-                    min={0.2}
-                    max={3}
-                    step={0.05}
-                    value={[selected.scale]}
-                    onValueChange={([v]) => patchLayer(selected.id, { scale: v })}
-                  />
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-medium">Transform</div>
+                  {selected.locked && (
+                    <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                      Locked
+                    </span>
+                  )}
                 </div>
-                <div>
-                  <Label className="text-xs">Rotation</Label>
-                  <Slider
-                    min={-180}
-                    max={180}
-                    step={1}
-                    value={[selected.rotation]}
-                    onValueChange={([v]) => patchLayer(selected.id, { rotation: v })}
-                  />
+
+                <NumField
+                  label="Scale"
+                  suffix="x"
+                  min={0.2}
+                  max={4}
+                  step={0.05}
+                  value={selected.scale}
+                  onChange={(v) => patchLayer(selected.id, { scale: v })}
+                />
+                <NumField
+                  label="Rotation"
+                  suffix="°"
+                  min={0}
+                  max={360}
+                  step={1}
+                  value={((selected.rotation % 360) + 360) % 360}
+                  onChange={(v) => patchLayer(selected.id, { rotation: v })}
+                />
+
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    size="sm"
+                    variant={selected.flipH ? "default" : "outline"}
+                    onClick={() => patchLayer(selected.id, { flipH: !selected.flipH })}
+                  >
+                    <FlipHorizontal2 className="mr-1 h-4 w-4" /> Flip H
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={selected.flipV ? "default" : "outline"}
+                    onClick={() => patchLayer(selected.id, { flipV: !selected.flipV })}
+                  >
+                    <FlipVertical2 className="mr-1 h-4 w-4" /> Flip V
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={rot90}>
+                    <RotateCw className="mr-1 h-4 w-4" /> +90°
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => centerX() || centerY()}>
+                    <Crosshair className="mr-1 h-4 w-4" /> Center
+                  </Button>
+                </div>
+
+                <div className="space-y-1.5 rounded-md border border-border p-2.5">
+                  <div className="text-xs uppercase tracking-wider text-muted-foreground">Layer order</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button size="sm" variant="outline" onClick={() => reorderLayer(selected.id, 1)}>
+                      <ArrowUp className="mr-1 h-4 w-4" /> Forward
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => reorderLayer(selected.id, -1)}>
+                      <ArrowDown className="mr-1 h-4 w-4" /> Backward
+                    </Button>
+                  </div>
+                  <Button
+                    size="sm"
+                    className="w-full"
+                    variant={selected.locked ? "default" : "outline"}
+                    onClick={() => patchLayer(selected.id, { locked: !selected.locked })}
+                  >
+                    {selected.locked ? (
+                      <>
+                        <Lock className="mr-1 h-4 w-4" /> Unlock layer
+                      </>
+                    ) : (
+                      <>
+                        <Unlock className="mr-1 h-4 w-4" /> Lock layer
+                      </>
+                    )}
+                  </Button>
                 </div>
               </div>
             )}
