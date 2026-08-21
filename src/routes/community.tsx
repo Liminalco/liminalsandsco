@@ -88,11 +88,14 @@ export function CommunityPage() {
 
   // Get user location
   useEffect(() => {
-    if (!navigator.geolocation) {
-      setLocError("Geolocation not supported");
+    // Always fall back to DEFAULT_CENTER: the map must render whether or not
+    // geolocation is supported, denied, or still pending.
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setLocError("Geolocation not supported — showing default location");
       return;
     }
-    navigator.geolocation.getCurrentPosition(
+    try {
+      navigator.geolocation.getCurrentPosition(
       (pos) => {
         const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         if (
